@@ -83,8 +83,28 @@ class WebhookController(private val sendingMessageFeign: SendingMessageFeign,
     fun greeting(whatsAppObject: WhatsAppObject, contact: Contact?) {
         println("Sending greetings...")
         readedMessage(whatsAppObject)
-        val resposta = DefaultMessage("whatsapp", "5561999125142", "text", WhatsAppDefaultText("Olá ${contact?.getName()}! No que posso ajudar?"))
+        val resposta = DefaultMessage("whatsapp", "5561999125142", "text", WhatsAppDefaultText("Olá ${contact?.getName()}! Bem-vindo à Clickbus!"))
         sendMessage(resposta)
+        listingOptionsOfService(whatsAppObject, contact)
+    }
+
+    private fun listingOptionsOfService(whatsAppObject: WhatsAppObject, contact: Contact?) {
+        println("Sending list of services")
+        val row1 = WhatsAppSectionRow("row_1_comprar_passagem", title = "Comprar passagem", "")
+        val row2 = WhatsAppSectionRow("row_2_atendimento", title = "Atendimento", "")
+        val row3 = WhatsAppSectionRow("row_3_cancelamento", title = "Cancelamento", "")
+        val row4 = WhatsAppSectionRow("row_4_perguntas_frequentes", title = "Perguntas Frequentes", "")
+
+        val section = Section("Lista de opções", listOf(row1, row2, row3, row4) )
+        val interactive = ListIteractiveWhatsAppMessage(
+            body = BodyWhatsAppMessage("Como podemos te ajudar?"),
+            action = ActionWhatsAppMessage("Lista de opções", listOf(section))
+        )
+        val iteractiveWhatsAppMessage = IteractiveWhatsAppMessage(
+            interactive = interactive
+        )
+        val json = Gson().toJson(iteractiveWhatsAppMessage)
+        sendingMessageFeign.sendMessage(json)
     }
 
     fun readedMessage(whatsAppObject: WhatsAppObject) {
