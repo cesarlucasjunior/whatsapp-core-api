@@ -9,5 +9,6 @@ data class Client(
     @Id
     @Column(length = 20)
     val id: String? = "",
-    val lastMessageIn24hours: Boolean? = true
+    val lastMessageIn24hours: Boolean? = true,
+    var selectedOptionId: String? = ""
 )

@@ -26,20 +26,20 @@ class WebhookController(private val sendingMessageFeign: SendingMessageFeign,
     }
 
     //@PostMapping
-    fun recevingMessageFromClient(@RequestBody whatsAppObject: WhatsAppObject): ResponseEntity<String>  {
-        if(whatsAppObject.entry[0].changes[0].value.statuses == null) {
-            println("Message received! ${whatsAppObject.`object`}")
-            val readedWhatsAppMessage = ReadedWhatsAppMessage(
-                whatsAppObject.entry[0].changes[0].value.messaging_product, "read",
-                whatsAppObject.entry[0].changes[0].value.messages!![0].id
-            )
-            val json = Gson().toJson(readedWhatsAppMessage)
-            sendingMessageFeign.readingMessage(json)
-            val resposta = DefaultMessage("whatsapp", "5561999125142", "text", WhatsAppDefaultText("Manda filhão!"))
-            sendMessage(resposta)
-        }
-        return ResponseEntity.ok("")
-    }
+//    fun recevingMessageFromClient(@RequestBody whatsAppObject: WhatsAppObject): ResponseEntity<String>  {
+//        if(whatsAppObject.entry[0].changes[0].value.statuses == null) {
+//            println("Message received! ${whatsAppObject.`object`}")
+//            val readedWhatsAppMessage = ReadedWhatsAppMessage(
+//                whatsAppObject.entry[0].changes[0].value.messaging_product, "read",
+//                whatsAppObject.entry[0].changes[0].value.messages!![0].id
+//            )
+//            val json = Gson().toJson(readedWhatsAppMessage)
+//            sendingMessageFeign.readingMessage(json)
+//            val resposta = DefaultMessage("whatsapp", "5561999125142", "text", WhatsAppDefaultText("Manda filhão!"))
+//            sendMessage(resposta)
+//        }
+//        return ResponseEntity.ok("")
+//    }
 
     @PostMapping("/send")
     fun sendMessage(@RequestBody defaultMessage: DefaultMessage): ResponseEntity<String> {
@@ -55,7 +55,7 @@ class WebhookController(private val sendingMessageFeign: SendingMessageFeign,
     @PostMapping
     fun receiverClientMessage(@RequestBody whatsAppObject: WhatsAppObject): ResponseEntity<String> {
         if (!isStatusMessage(whatsAppObject)) {
-            println("Is not a status webhook message!")
+            println("Is not a status webhook message! It's a webhook event!")
             val clientContact = whatsAppObject.entry[0].changes[0].value.contacts?.get(0)
             val client = Client(id = clientContact?.wa_id)
             //Verificar se o client existe e se tem comunicação nas últimas 24horas.
@@ -65,6 +65,7 @@ class WebhookController(private val sendingMessageFeign: SendingMessageFeign,
                 if (clientDB.lastMessageIn24hours == true) {
                     //Qual ponto do papo ele está?
                     println("Mensagem aberta!")
+                    getResponseOfOptionsList(whatsAppObject, client)
                 }
             } else {
                 println("Cliente nunca conversou via whatsApp")
@@ -72,8 +73,21 @@ class WebhookController(private val sendingMessageFeign: SendingMessageFeign,
                 println("Client ${clientSaved.id} saved!")
                 greeting(whatsAppObject, clientContact)
             }
-        }
+        } // É uma mensagem de status
         return ResponseEntity.ok("Deu bom!")
+    }
+
+    private fun getResponseOfOptionsList(whatsAppObject: WhatsAppObject, client: Client) {
+        // Pegar a resposta em relação a opção do menu selecionada:
+        println("Resposta do usuário!")
+        val selectedResponse = whatsAppObject.entry[0].changes[0].value.messages?.get(0)?.interactive?.list_reply?.id
+        client.selectedOptionId = selectedResponse
+        clientService.saveServiceSelected(client)
+        selectedOptionsManager(selectedResponse, whatsAppObject, client)
+    }
+
+    private fun selectedOptionsManager(selectedResponse: String?, whatsAppObject: WhatsAppObject, client: Client) {
+
     }
 
     private fun isStatusMessage(whatsAppObject: WhatsAppObject): Boolean {

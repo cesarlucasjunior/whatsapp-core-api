@@ -6,8 +6,6 @@ data class IteractiveWhatsAppMessage(
     val to: String = "5561999125142",
     val type: String = "interactive",
     val interactive: ListIteractiveWhatsAppMessage
-
-
 )
 
 data class ListIteractiveWhatsAppMessage(
