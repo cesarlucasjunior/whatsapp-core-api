@@ -2,10 +2,15 @@ package com.cesarlucasjunior.whatsappcoreapi.controller
 
 import com.cesarlucasjunior.whatsappcoreapi.client.SendingMessageFeign
 import com.cesarlucasjunior.whatsappcoreapi.domain.*
+import com.cesarlucasjunior.whatsappcoreapi.flows.CancellationFlow
+import com.cesarlucasjunior.whatsappcoreapi.flows.CommonQuestionsFlow
+import com.cesarlucasjunior.whatsappcoreapi.flows.OrderFlow
+import com.cesarlucasjunior.whatsappcoreapi.flows.ServiceFlow
 import com.cesarlucasjunior.whatsappcoreapi.services.ClientService
 import com.google.gson.Gson
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
+import org.springframework.stereotype.Service
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -64,8 +69,14 @@ class WebhookController(private val sendingMessageFeign: SendingMessageFeign,
                 println("Cliente já existe na nossa base...")
                 if (clientDB.lastMessageIn24hours == true) {
                     //Qual ponto do papo ele está?
+
+                    //fluxo menu
                     println("Mensagem aberta!")
                     getResponseOfOptionsList(whatsAppObject, client)
+
+                    //fluxo compra
+
+                    // fluxo cancelamento
                 }
             } else {
                 println("Cliente nunca conversou via whatsApp")
@@ -87,7 +98,12 @@ class WebhookController(private val sendingMessageFeign: SendingMessageFeign,
     }
 
     private fun selectedOptionsManager(selectedResponse: String?, whatsAppObject: WhatsAppObject, client: Client) {
-
+        when(selectedResponse) {
+            "row_1_comprar_passagem" -> OrderFlow(whatsAppObject, client).startFlow()
+            "row_2_atendimento" -> ServiceFlow(whatsAppObject, client)
+            "row_3_cancelamento" -> CancellationFlow(whatsAppObject, client)
+            "row_4_perguntas_frequentes" -> CommonQuestionsFlow(whatsAppObject, client)
+        }
     }
 
     private fun isStatusMessage(whatsAppObject: WhatsAppObject): Boolean {
