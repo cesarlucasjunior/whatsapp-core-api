@@ -18,7 +18,13 @@ class ClientService(private val clientRepository: ClientRepository) {
 
     fun saveServiceSelected(client: Client): Client {
         val clientDB = getClientInDataBase(client.id!!)
-        clientDB?.selectedOptionId = client.selectedOptionId
+        clientDB?.phaseOfSelectedMenu = client.phaseOfSelectedMenu
+        return save(clientDB!!)
+    }
+
+    fun saveSelectedMenuId(client: Client): Client {
+        val clientDB = getClientInDataBase(client.id!!)
+        clientDB?.selectedMenuId = client.selectedMenuId
         return save(clientDB!!)
     }
 }

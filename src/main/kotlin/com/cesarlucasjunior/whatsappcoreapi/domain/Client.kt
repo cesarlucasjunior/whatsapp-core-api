@@ -12,6 +12,7 @@ data class Client(
     @Column(length = 20)
     val id: String? = "",
     val lastMessageIn24hours: Boolean? = true,
-    var selectedOptionId: String? = "",
+    var selectedMenuId: String? = "",
+    var phaseOfSelectedMenu: Int? = 0,
     val createdAt: String = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyy-MM-dd HH:mm"))
-    )
+)
