@@ -3,9 +3,8 @@ package com.cesarlucasjunior.whatsappcoreapi.domain
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
-import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 @Entity
 data class Client(
@@ -13,6 +12,7 @@ data class Client(
     @Column(length = 20)
     val id: String? = "",
     val lastMessageIn24hours: Boolean? = true,
-    var selectedOptionId: String? = "",
-    val createdAt: String = Clock.System.now().toLocalDateTime(TimeZone.of("America/Sao_Paulo")).toString(),
-    )
+    var selectedMenuId: String? = "",
+    var phaseOfSelectedMenu: Int? = 0,
+    val createdAt: String = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyy-MM-dd HH:mm"))
+)

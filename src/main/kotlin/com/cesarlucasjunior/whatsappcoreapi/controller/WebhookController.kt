@@ -2,10 +2,12 @@ package com.cesarlucasjunior.whatsappcoreapi.controller
 
 import com.cesarlucasjunior.whatsappcoreapi.client.SendingMessageFeign
 import com.cesarlucasjunior.whatsappcoreapi.domain.*
+import com.cesarlucasjunior.whatsappcoreapi.flows.*
 import com.cesarlucasjunior.whatsappcoreapi.services.ClientService
 import com.google.gson.Gson
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Controller
+import org.springframework.stereotype.Service
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -64,8 +66,24 @@ class WebhookController(private val sendingMessageFeign: SendingMessageFeign,
                 println("Cliente já existe na nossa base...")
                 if (clientDB.lastMessageIn24hours == true) {
                     //Qual ponto do papo ele está?
-                    println("Mensagem aberta!")
-                    getResponseOfOptionsList(whatsAppObject, client)
+                    when(clientDB.selectedMenuId) {
+                        "" -> {
+                            println("Sem menu selecionado!")
+                            MenuFlow(whatsAppObject, client, clientService, sendingMessageFeign).startFlow()
+                        }
+                        "row_1_comprar_passagem" -> {
+                            println("Fluxo de compra de passagem!")
+                            OrderFlow().startFlow(whatsAppObject, client, clientService, sendingMessageFeign)
+                        }
+                        "row_3_cancelamento" -> {
+                            println("Fluxo de cancelamento de compra!")
+                            CancellationFlow(whatsAppObject, client)
+                        }
+                        "row_4_perguntas_frequentes" -> {
+                            println("Fluxo de perguntas frequentes")
+                            CommonQuestionsFlow(whatsAppObject, client)
+                        }
+                    }
                 }
             } else {
                 println("Cliente nunca conversou via whatsApp")
@@ -77,17 +95,13 @@ class WebhookController(private val sendingMessageFeign: SendingMessageFeign,
         return ResponseEntity.ok("Deu bom!")
     }
 
-    private fun getResponseOfOptionsList(whatsAppObject: WhatsAppObject, client: Client) {
-        // Pegar a resposta em relação a opção do menu selecionada:
-        println("Resposta do usuário!")
-        val selectedResponse = whatsAppObject.entry[0].changes[0].value.messages?.get(0)?.interactive?.list_reply?.id
-        client.selectedOptionId = selectedResponse
-        clientService.saveServiceSelected(client)
-        selectedOptionsManager(selectedResponse, whatsAppObject, client)
-    }
-
     private fun selectedOptionsManager(selectedResponse: String?, whatsAppObject: WhatsAppObject, client: Client) {
-
+        when(selectedResponse) {
+            "row_1_comprar_passagem" -> OrderFlow().startFlow(whatsAppObject, client, clientService, sendingMessageFeign)
+            "row_2_atendimento" -> ServiceFlow(whatsAppObject, client)
+            "row_3_cancelamento" -> CancellationFlow(whatsAppObject, client)
+            "row_4_perguntas_frequentes" -> CommonQuestionsFlow(whatsAppObject, client)
+        }
     }
 
     private fun isStatusMessage(whatsAppObject: WhatsAppObject): Boolean {
